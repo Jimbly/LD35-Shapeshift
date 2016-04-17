@@ -165,6 +165,10 @@ TurbulenzEngine.onload = function onloadFn()
     }
   }
 
+  function inputDown() {
+    return input.isMouseDown() || input.isTouchDown();
+  }
+
   let player_name = 'Anonymous ' + Math.random().toString().slice(2, 8);
 
   function clearScore(old_player_name) {
@@ -239,13 +243,36 @@ TurbulenzEngine.onload = function onloadFn()
   var board;
   var faders = [];
   var rand;
+
+  function convertHSVtoRGB(h, s, v) {
+    h = h % 1;
+    var r, g, b, i, f, p, q, t;
+    i = Math.floor(h * 6);
+    f = h * 6 - i;
+    p = v * (1 - s);
+    q = v * (1 - f * s);
+    t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+      case 0: r = v, g = t, b = p; break;
+      case 1: r = q, g = v, b = p; break;
+      case 2: r = p, g = v, b = t; break;
+      case 3: r = p, g = q, b = v; break;
+      case 4: r = t, g = p, b = v; break;
+      case 5: r = v, g = p, b = q; break;
+    }
+    return [r, g, b, 1];
+  }
+  let hue0 = 0;
+  let dhue = 56;
+  let sat = 0.7;
+  let val = 1.0;
   const colors = [
-    mathDevice.v4Build(1, 0, 0, 1),
-    mathDevice.v4Build(1, 1, 0, 1),
-    mathDevice.v4Build(0, 1, 0, 1),
-    mathDevice.v4Build(0, 1, 1, 1),
-    mathDevice.v4Build(0, 0, 1, 1),
-    mathDevice.v4Build(1, 0, 1, 1),
+    convertHSVtoRGB((hue0 + dhue*0) / 360, sat, val),
+    convertHSVtoRGB((hue0 + dhue*1) / 360, sat, val),
+    convertHSVtoRGB((hue0 + dhue*2) / 360, sat, val),
+    convertHSVtoRGB((hue0 + dhue*3) / 360, sat, val),
+    convertHSVtoRGB((hue0 + dhue*4) / 360, sat, val),
+    convertHSVtoRGB((hue0 + dhue*5) / 360, sat, val),
   ];
 
   function newPiece() {
@@ -426,10 +453,12 @@ TurbulenzEngine.onload = function onloadFn()
   var drag_type;
   var drag_start = null;
   var drag_offs = null;
+  var drag_touch = false;
   var score = 0;
   var moves = 0;
   const drag_scale = 1.2;
   var border_sprite;
+  var bg_sprite;
 
   function isAnimating() {
     for (let ii = 0; ii < board.length; ++ii) {
@@ -478,7 +507,7 @@ TurbulenzEngine.onload = function onloadFn()
         num_pieces = piece_sprites.length;
         rand = random_seed.create('level3');
       },
-      msg: 'Final Level - 6 Color - Finish: 10,000 points',
+      msg: 'Final Level - 6 Color - Goal: 10,000 points',
       check: function () {
         return score >= 100 && !isAnimating();
       }
@@ -524,10 +553,20 @@ TurbulenzEngine.onload = function onloadFn()
         origin: [0, 0],
         textureRectangle : mathDevice.v4Build(0, 0, 512, 1024)
       });
+      bg_sprite = createSprite('background.png', {
+        width : 512,
+        height : 1024,
+        x : 0,
+        y : 0,
+        rotation : 0,
+        color : color_white,
+        origin: [0, 0],
+        textureRectangle : mathDevice.v4Build(0, 0, 512, 1024)
+      });
     }
 
     let new_board = false;
-    if (levels[level].check()) {
+    if (levels[level].check() || !board) {
       ++level;
       levels[level].start();
       $('#level').html(levels[level].msg);
@@ -670,7 +709,7 @@ TurbulenzEngine.onload = function onloadFn()
       }
     } while (removed && new_board);
 
-    if (dragging !== -1 && !input.isMouseDown()) {
+    if (dragging !== -1 && !inputDown()) {
       // stop dragging
       if (Math.max(Math.abs(drag_offs[0]), Math.abs(drag_offs[1])) > 0.5) {
         // do a shift!
@@ -694,6 +733,7 @@ TurbulenzEngine.onload = function onloadFn()
       dragging = -1;
       drag_start = null;
       drag_offs = null;
+      drag_touch = false;
     }
 
 
@@ -706,6 +746,12 @@ TurbulenzEngine.onload = function onloadFn()
     let shift = null;
     if (dragging !== -1) {
       let mouse_pos = input.mousePos();
+      if (drag_touch) {
+        let touch_pos = [];
+        if (input.isTouchDown(-1e9, -1e9, 2e9, 2e9, touch_pos)) {
+          mouse_pos = touch_pos;
+        }
+      }
       let delta = [mouse_pos[0] - drag_start[0], mouse_pos[1] - drag_start[1]];
       let len = Math.min(1, VMath.v2Length(delta) / spriteSize);
       VMath.v2Normalize(delta, delta);
@@ -728,10 +774,14 @@ TurbulenzEngine.onload = function onloadFn()
       }
     }
 
-
     let draw_list = [];
     let margin_left = spriteSize * 3 / 2;
     let margin_top = 64 + spriteSize / 2;
+
+    bg_sprite.x = border_sprite.x = margin_left - 64 - spriteSize/2;
+    bg_sprite.y = border_sprite.y = margin_top - 64 - spriteSize/2;
+    draw2D.drawSprite(bg_sprite);
+
     for (let ii = 0; ii < board.length; ++ii) {
       let row = board[ii];
       for (let jj = 0; jj < row.length; ++jj) {
@@ -751,18 +801,30 @@ TurbulenzEngine.onload = function onloadFn()
           let sprite = piece_sprites[shape];
           sprite.x = x;
           sprite.y = y;
+          let touch_pos = [];
           if (input.isMouseOverSprite(sprite)) {
             scale = 1.1;
-            if (input.isMouseDown()) {
+            if (inputDown()) {
               dragging = index;
               drag_type = shape;
               drag_start = input.mousePos();
               drag_offs = [0, 0];
+              drag_touch = false;
               playSound(sound_source_mid, 'select');
             }
+          } else if (input.isTouchDownSprite(sprite, touch_pos)) {
+            dragging = index;
+            drag_type = shape;
+            drag_start = touch_pos;
+            drag_offs = [0, 0];
+            drag_touch = true;
+            playSound(sound_source_mid, 'select');
           }
         }
         y -= board[ii][jj].offset * spriteSize;
+        if (y < spriteSize/2) {
+          continue;
+        }
         let color = board[ii][jj].color;
         if (drag_type === shape) {
           x += drag_offs[0] * spriteSize;
@@ -826,8 +888,6 @@ TurbulenzEngine.onload = function onloadFn()
       draw2D.drawSprite(sprite);
     }
     // draw border
-    border_sprite.x = margin_left - 64 - spriteSize/2;
-    border_sprite.y = margin_top - 64 - spriteSize/2;
     draw2D.drawSprite(border_sprite);
     // draw faders
     let dfade = dt / 800;
@@ -845,69 +905,6 @@ TurbulenzEngine.onload = function onloadFn()
         draw2D.drawSprite(sprite);
       }
     }
-  }
-
-  function test(dt) {
-    if (!test.color_sprite) {
-      test.color_sprite = color_white;
-      var spriteSize = 64;
-      test.sprite = createSprite('test.png', {
-        width : spriteSize,
-        height : spriteSize,
-        x : (Math.random() * (game_width - spriteSize) + (spriteSize * 0.5)),
-        y : (Math.random() * (game_height - spriteSize) + (spriteSize * 0.5)),
-        rotation : 0,
-        color : test.color_sprite,
-        textureRectangle : mathDevice.v4Build(0, 0, spriteSize, spriteSize)
-      });
-      test.game_bg = createSprite('white', {
-        width : game_width,
-        height : game_height,
-        x : 0,
-        y : 0,
-        rotation : 0,
-        color : [0, 0.72, 1, 1],
-        origin: [0, 0],
-        textureRectangle : mathDevice.v4Build(0, 0, spriteSize, spriteSize)
-      });
-    }
-
-    // test.sprite.x = (Math.random() * (game_width - spriteSize) + (spriteSize * 0.5));
-    // test.sprite.y = (Math.random() * (game_height - spriteSize) + (spriteSize * 0.5));
-
-    var character = {
-      dx: 0,
-      dy: 0,
-    };
-    if (input.isKeyDown(keyCodes.LEFT) || input.isKeyDown(keyCodes.A) || input.isPadButtonDown(0, padCodes.LEFT)) {
-      character.dx = -1;
-    } else if (input.isKeyDown(keyCodes.RIGHT) || input.isKeyDown(keyCodes.D) || input.isPadButtonDown(0, padCodes.RIGHT)) {
-      character.dx = 1;
-    }
-    if (input.isKeyDown(keyCodes.UP) || input.isKeyDown(keyCodes.W) || input.isPadButtonDown(0, padCodes.UP)) {
-      character.dy = -1;
-    } else if (input.isKeyDown(keyCodes.DOWN) || input.isKeyDown(keyCodes.S) || input.isPadButtonDown(0, padCodes.DOWN)) {
-      character.dy = 1;
-    }
-
-    test.sprite.x += character.dx * dt * 0.2;
-    test.sprite.y += character.dy * dt * 0.2;
-    if (input.isMouseDown() && input.isMouseOverSprite(test.sprite)) {
-      test.sprite.setColor(color_yellow);
-    } else if (input.clickHitSprite(test.sprite)) {
-      test.color_sprite = (test.color_sprite === color_red) ? color_white : color_red;
-      test.sprite.setColor(test.color_sprite);
-      playSound(sound_source_mid, 'test');
-    } else if (input.isMouseOverSprite(test.sprite)) {
-      test.color_sprite[3] = 0.5;
-      test.sprite.setColor(test.color_sprite);
-    } else {
-      test.color_sprite[3] = 1;
-      test.sprite.setColor(test.color_sprite);
-    }
-
-    draw2D.drawSprite(test.game_bg);
-    draw2D.drawSprite(test.sprite);
   }
 
   game_state = titleInit;

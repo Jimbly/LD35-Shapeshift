@@ -123,15 +123,24 @@ class GlovInput {
     this.touch_state = param.touches || [];
     //throw JSON.stringify(param, undefined, 2);
   }
-  isTouchDown(x, y, w, h) {
+  isTouchDown(x, y, w, h, touch_pos) {
     var pos = [];
     for (var ii = 0; ii < this.touch_state.length; ++ii) {
       this.draw2d.viewportMap(this.touch_state[ii].positionX, this.touch_state[ii].positionY, pos);
-      if (pos[0] >= x && pos[0] < x + w && pos[1] >= y && pos[1] < y + h) {
+      if (x === undefined || pos[0] >= x && pos[0] < x + w && pos[1] >= y && pos[1] < y + h) {
+        if (touch_pos) {
+          touch_pos[0] = pos[0];
+          touch_pos[1] = pos[1];
+        }
         return true;
       }
     }
     return false;
+  }
+  isTouchDownSprite(sprite, touch_pos) {
+    const w = sprite.getWidth();
+    const h = sprite.getHeight();
+    return this.isTouchDown(sprite.x - w/2, sprite.y - h/2, w, h, touch_pos);
   }
 
   onKeyUp(keycode) {
