@@ -6,8 +6,8 @@ X Score
 X Level progressions
 X Better color / visual theme
 X Different sound of match 3/4/5/6
-* Draw line of varying thickness/color through matches, or text of combo size
-* More extreme animation when making match - go big and solid, then fade out, flash background
+X Draw line of varying thickness/color through matches, or text of combo size
+X More extreme animation when making match - go big and solid, then fade out, flash background
 X Touch events
 X Animate piece removals, droppings, 3 of a kinds
 X Try different shifting methods:

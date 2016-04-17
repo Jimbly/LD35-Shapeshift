@@ -140,12 +140,6 @@ TurbulenzEngine.onload = function onloadFn()
   var game_width = 512 * 4/3;
   var game_height = 570;
   var color_white = mathDevice.v4Build(1, 1, 1, 1);
-  var color_red = mathDevice.v4Build(1, 0, 0, 1);
-  var color_yellow = mathDevice.v4Build(1, 1, 0, 1);
-
-  // Cache keyCodes
-  var keyCodes = inputDevice.keyCodes;
-  var padCodes = input.padCodes;
 
   var configureParams = {
     scaleMode : 'scale',
@@ -221,6 +215,15 @@ TurbulenzEngine.onload = function onloadFn()
     }});
   }
 
+  function htmlPos(x, y) {
+    const ymin = 15;
+    const ymax = 96;
+    const xmin = 13;
+    const xmax = 88;
+    return [(x + 0.5) / 6 * (xmax - xmin) + xmin, (y + 0.5) / 6 * (ymax - ymin) + ymin];
+  }
+
+
   function playInit(dt) {
     refreshScores();
     $('.screen').hide();
@@ -240,6 +243,18 @@ TurbulenzEngine.onload = function onloadFn()
     $('#name').blur(function () {
       submitScore();
     });
+  }
+
+  function notify(x, y, msg) {
+    let pos = htmlPos(x, y);
+    let child = $('<div class="combo" style="left: ' + pos[0] + '%; top: ' + pos[1] + '%;">' + msg + '</div>');
+    $('#play_space').append(child);
+    setTimeout(function () {
+      child.addClass('fade');
+    }), 1;
+    setTimeout(function () {
+      child.remove();
+    }, 2000);
   }
 
   var piece_sprites;
@@ -463,6 +478,8 @@ TurbulenzEngine.onload = function onloadFn()
   const drag_scale = 1.2;
   var border_sprite;
   var bg_sprite;
+  var flash_sprite;
+  var flash_alpha = 0;
 
   function isAnimating() {
     for (let ii = 0; ii < board.length; ++ii) {
@@ -566,6 +583,15 @@ TurbulenzEngine.onload = function onloadFn()
         color : color_white,
         origin: [0, 0],
         textureRectangle : mathDevice.v4Build(0, 0, 512, 1024)
+      });
+      flash_sprite = createSprite('white', {
+        width: 512,
+        height: 1024,
+        x: 0,
+        y: 0,
+        color: [1, 1, 1, 1],
+        textureRectangle : mathDevice.v4Build(0, 0, 2, 2),
+        origin: [0,0],
       });
     }
 
@@ -685,7 +711,10 @@ TurbulenzEngine.onload = function onloadFn()
             for (let jj = 0; jj < combo_ids[ii].length; ++jj) {
               let c = combo_ids[ii][jj];
               if (c) {
-                count[c] = (count[c] || 0) + 1;
+                count[c] = count[c] || { x: 0, y: 0, c: 0 };
+                count[c].c++;
+                count[c].x += jj;
+                count[c].y += ii;
               }
             }
           }
@@ -694,10 +723,19 @@ TurbulenzEngine.onload = function onloadFn()
         let max_combo = 0;
         let messages = '';
         for (let c in count) {
-          max_combo = Math.max(count[c], max_combo);
-          let score_mod = Math.floor(Math.pow(count[c] - 2, 1.5));
+          let value = count[c].c;
+          max_combo = Math.max(value, max_combo);
+          let score_mod = Math.floor(Math.pow(value - 2, 1.5));
           score += score_mod;
-          messages = messages + count[c] + '-match combo ' + formatScore(score_mod) + ' pts!<br/>';
+          messages = messages + value + '-match combo ' + formatScore(score_mod) + ' pts!<br/>';
+          flash_alpha = 1;
+          notify(count[c].x / value, count[c].y / value,
+            (value === 3 ? 'Match!' :
+            value === 4 ? 'Quadruple Match!' :
+            value === 5 ? 'Quintuple Match!' :
+            value === 6 ? 'Sextuple Match!' :
+            (value + 'x Match!')) + ' +' + score_mod + '00');
+
           combo_total += count[c];
         }
         if (combo_total) {
@@ -784,9 +822,21 @@ TurbulenzEngine.onload = function onloadFn()
     let margin_left = spriteSize * 3 / 2;
     let margin_top = 64 + spriteSize / 2;
 
-    bg_sprite.x = border_sprite.x = margin_left - 64 - spriteSize/2;
-    bg_sprite.y = border_sprite.y = margin_top - 64 - spriteSize/2;
+    flash_sprite.x = bg_sprite.x = border_sprite.x = margin_left - 64 - spriteSize/2;
+    flash_sprite.y = bg_sprite.y = border_sprite.y = margin_top - 64 - spriteSize/2;
     draw2D.drawSprite(bg_sprite);
+    {
+      let dalpha = dt / 300;
+      if (dalpha > flash_alpha) {
+        flash_alpha = 0;
+      } else {
+        flash_alpha -= dalpha;
+      }
+      if (flash_alpha) {
+        flash_sprite.setColor([1, 1, 1, flash_alpha]);
+        draw2D.drawSprite(flash_sprite);
+      }
+    }
 
     for (let ii = 0; ii < board.length; ++ii) {
       let row = board[ii];
@@ -905,7 +955,7 @@ TurbulenzEngine.onload = function onloadFn()
         let sprite = piece_sprites[faders[ii].value];
         sprite.x = margin_left + spriteSize * faders[ii].x;
         sprite.y = margin_top + spriteSize * faders[ii].y;
-        sprite.setColor([faders[ii].color[0], faders[ii].color[1], faders[ii].color[2], Math.min(1, faders[ii].t * 2)]);
+        sprite.setColor([faders[ii].color[0], faders[ii].color[1], faders[ii].color[2], Math.min(1, faders[ii].t * 3)]);
         let scale = 2 - faders[ii].t;
         sprite.setScale([scale, scale]);
         draw2D.drawSprite(sprite);
