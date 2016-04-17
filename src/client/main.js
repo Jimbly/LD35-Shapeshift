@@ -60,6 +60,10 @@ TurbulenzEngine.onload = function onloadFn()
   loadSound('drop_good');
   loadSound('select');
   loadSound('land');
+  loadSound('match_3');
+  loadSound('match_4');
+  loadSound('match_5');
+  loadSound('match_6');
   function playSound(source, soundname) {
     if (!sounds[soundname]) {
       return;
@@ -687,8 +691,10 @@ TurbulenzEngine.onload = function onloadFn()
           }
         }
         let combo_total = 0;
+        let max_combo = 0;
         let messages = '';
         for (let c in count) {
+          max_combo = Math.max(count[c], max_combo);
           let score_mod = Math.floor(Math.pow(count[c] - 2, 1.5));
           score += score_mod;
           messages = messages + count[c] + '-match combo ' + formatScore(score_mod) + ' pts!<br/>';
@@ -698,7 +704,7 @@ TurbulenzEngine.onload = function onloadFn()
           $('#messages').html(messages);
           $('#score').text(formatScore(score));
           submitScore();
-          playSound(sound_source_mid, 'drop_match');
+          playSound(sound_source_mid, 'match_' + Math.max(3, Math.min(6, max_combo)));
         }
       }
 

@@ -4,8 +4,8 @@ LD35 entry based on Javascript libGlov framework
 TODO:
 X Score
 X Level progressions
-* Better color / visual theme
-* Different sound of match 3/4/5/6 - CD, CE, CF, CG?
+X Better color / visual theme
+X Different sound of match 3/4/5/6
 * Draw line of varying thickness/color through matches, or text of combo size
 * More extreme animation when making match - go big and solid, then fade out, flash background
 X Touch events
