@@ -225,7 +225,11 @@ TurbulenzEngine.onload = function onloadFn()
 
 
   function playInit(dt) {
-    refreshScores();
+    function updateScores() {
+      refreshScores();
+      setTimeout(updateScores, 5*60*1000);
+    }
+    updateScores();
     $('.screen').hide();
     $('#play').show();
     game_state = play;
