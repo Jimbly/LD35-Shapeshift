@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Powered by Turbulenz</title>
+    <title>Shape Shifting</title>
 
-    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script src="vendor/jquery-1.11.3.min.js"></script>
 
     <link rel="stylesheet" type="text/css" href="main.css">
   </head>
@@ -24,11 +24,36 @@
           </div>
           <div class="flexcenter" style="flex:3; text-align: center;"></div>
         </div>
+        <div id="play" class="screen hflex" style="display: none;">
+          <div style="flex: 3; height: 100%;">
+            <div class="vflex" style="height: 100%;">
+              <div class="flexcenter" style="flex:9; text-align: center"></div>
+              <div class="flexcenter" style="flex:2; text-align: center">
+                <h1 style="padding-top: 0px"><span id="score">0</span> points, <span id="moves">0 moves</span></h1>
+                <h1 style="padding-top: 0px" id="level">Level 1</h1>
+                <div style="display: none">
+                  <h2>Messages</h2>
+                  <div id="messages"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="flex: 1; pointer-events: auto;">
+            <div style="padding: 2px; text-align: center; position: relative;">
+              <h2>Global High Scores</h2>
+              <div style="position: absolute; left: 0; right: 0;">
+                <div id="scores" style="padding-left: 10px; white-space: pre; text-align: left;">Loading...</div>
+                <div style="padding:15px;">&nbsp;</div>
+                <input type="text" name="name" id="name" placeholder="(enter name for score)" size="24" maxlength="24" autofocus="1" style="width: 90%;">
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div id="fullscreen" class="screenwrap">
         <div id="play" class="screen vflex" style="display: none;">
           <div class="flexcenter" style="flex:1; text-align: center;"></div>
-          <div class="hflex" id="something">...</div>
+          <div class="hflex" id="something"></div>
           <div class="flexcenter" style="flex:1; text-align: center;"></div>
         </div>
       </div>

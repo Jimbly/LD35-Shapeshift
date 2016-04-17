@@ -94,10 +94,14 @@ class GlovInput {
   isMouseOverSprite(sprite) {
     const w = sprite.getWidth();
     const h = sprite.getHeight();
-    return this.isMouseOver(sprite.x - w/2, sprite.y - h/2, w, h);
+    const origin = sprite.getOrigin();
+    return this.isMouseOver(sprite.x - origin[0], sprite.y - origin[1], w, h);
   }
   isMouseDown() {
     return this.mouse_down;
+  }
+  mousePos() {
+    return [this.mouse_x, this.mouse_y];
   }
   clickHit(x, y, w, h) {
     for (var ii = 0; ii < this.last_clicks.length; ++ii) {

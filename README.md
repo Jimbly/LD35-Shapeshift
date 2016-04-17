@@ -1,31 +1,23 @@
-Javascript libGlov framework
+LD35 entry based on Javascript libGlov framework
 ============================
 
-* Files can be ES2015 (through Babel) or TypeScript.
-* Server automatically restarts on any relevant file change
-* Client automatically reloads on javascript or html change
-* Client automatically dynamically reloads CSS file changes
-
-Used SublimeText 3 packages (if using TypeScript):
-* ArcticTypescript
-
-Setup notes:
-* To generate tsd.d.ts:
-```
-npm install -g tsd
-tsd query node --action install --save
-```
-* to update: `tsd reinstall --save`
-
 TODO:
-* Merge all useful features, gulp, etc from LD34
-* input
-  * dragging?
-  * onMouseDown not firing, because isHovering is not set because of my handler changes?
-* refactor sound out into playXY
-* use spine for sequencing, or leave this until later?
-* cleaner window resize handling (have to be checking this each frame anyway?)
+X Score
+* Level progressions
+* Draw line of varying thickness/color through matches, or text of combo size
+* More extreme animation when making match - go big and solid, then fade out, flash background
+* Touch events
+X Animate piece removals, droppings, 3 of a kinds
+X Try different shifting methods:
+  - no re-fill - kind of makes a solveable puzzle game?
+  - swap all? - a little more clear what is going to happen, because there's no holes and no dropping, more strategic with mixed colors
+  recycle squashed pieces to top?
 
-* TypeScript is not detecting unused var in ts_mod.ts, need a tshint?
-* minify, bundle CSS
-* bundle vendor .js files?
+Feedback:
+  * clearer/bigger/better animation when making a match - make a good move look way better than a poor move
+    - flash the background, etc
+    - maybe shake the other tiles when you make a bad move that matches nothing
+    - better/bigger effects as combo and chains increase
+
+Thoughts:
+  * "Slot machine" mechanic up top is totally okay (and probably addicting) - got rid of it anyway
