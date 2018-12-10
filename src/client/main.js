@@ -25,6 +25,12 @@ TurbulenzEngine.onload = function onloadFn()
     linearDistance : false
   };
   var soundDevice = TurbulenzEngine.createSoundDevice(soundDeviceParameters);
+  window.document.body.addEventListener('click', function () {
+    soundDevice.resume();
+  });
+  window.document.body.addEventListener('keydown', function () {
+    soundDevice.resume();
+  });
   var camera = Camera.create(mathDevice);
   var lookAtPosition = mathDevice.v3Build(0.0, 0.0, 0.0);
   var worldUp = mathDevice.v3BuildYAxis();
